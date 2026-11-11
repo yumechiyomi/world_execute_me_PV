@@ -55,7 +55,9 @@ Config CFG = {
 };
 
 static volatile sig_atomic_t g_quit = 0;
+#ifndef _WIN32
 static volatile sig_atomic_t g_resize = 0;
+#endif
 
 static void on_signal(int sig)
 {
@@ -63,11 +65,13 @@ static void on_signal(int sig)
     g_quit = 1;
 }
 
+#ifndef _WIN32
 static void on_winch(int sig)
 {
     (void)sig;
     g_resize = 1;
 }
+#endif
 
 /* ------------------------------------------------------------------- usage */
 
@@ -186,7 +190,11 @@ static int do_dump(long t_ms)
 static int do_export(void)
 {
     const char *dir = CFG.export_dir;
+#ifdef _WIN32
+    if (mkdir(dir) != 0 && errno != EEXIST) {
+#else
     if (mkdir(dir, 0755) != 0 && errno != EEXIST) {
+#endif
         fprintf(stderr, "%s: cannot create %s: %s\n", PROG_NAME, dir, strerror(errno));
         return 1;
     }
@@ -347,6 +355,7 @@ static void show_once(int *quit_by_signal)
     double t0 = mv_now();
     long frame = 0;
     while (!g_quit) {
+#ifndef _WIN32
         if (g_resize) {
             g_resize = 0;
             int nw = 0, nh = 0;
@@ -355,6 +364,7 @@ static void show_once(int *quit_by_signal)
                 w = nw; h = nh;
             }
         }
+#endif
         double el = mv_now() - t0;
         long t_ms = CFG.start_ms + (long)(el * 1000.0) + CFG.offset_ms;
         if (t_ms < 0) t_ms = 0;
@@ -500,6 +510,7 @@ int main(int argc, char **argv)
     if (CFG.dump_ms >= 0) return do_dump(CFG.dump_ms);
     if (CFG.export_dir) return do_export();
 
+#ifndef _WIN32
     struct sigaction sa;
     memset(&sa, 0, sizeof sa);
     sa.sa_handler = on_signal;
@@ -508,6 +519,10 @@ int main(int argc, char **argv)
     sa.sa_handler = on_winch;
     sigaction(SIGWINCH, &sa, NULL);
     signal(SIGPIPE, SIG_IGN);
+#else
+    signal(SIGINT, on_signal);
+    signal(SIGTERM, on_signal);
+#endif
 
     if (!CFG.quiet) {
         fprintf(stderr,
