@@ -14,10 +14,15 @@ jobs:
     - name: Checkout source code
       uses: actions/checkout@v4
 
-    - name: Setup MinGW
-      uses: egor-tukin/setup-mingw@v2
+    - name: Set up MSYS2 and MinGW-w64
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: git mingw-w64-x86_64-toolchain make
 
     - name: Compile with Makefile
+      shell: msys2 {0} # Chạy lệnh trong môi trường MSYS2 có sẵn make và gcc
       run: |
         mingw32-make
 
