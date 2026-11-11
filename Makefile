@@ -1,14 +1,14 @@
-# Tự động thêm đuôi .exe nếu build trên Windows
 ifeq ($(OS),Windows_NT)
     BIN := world_execute_me.exe
     RM  := del /F /Q
+    # Định nghĩa giả lập các tín hiệu POSIX không có sẵn trên Windows để tránh lỗi biên dịch
+    CFLAGS ?= -O2 -std=gnu11 -Wall -Wextra -Wpedantic -Wshadow -DSIGWINCH=28 -DSIGPIPE=13
 else
     BIN := start
     RM  := rm -f
+    CFLAGS ?= -O2 -std=gnu11 -Wall -Wextra -Wpedantic -Wshadow
 endif
 
-CC      ?= gcc
-CFLAGS  ?= -O2 -std=gnu11 -Wall -Wextra -Wpedantic -Wshadow
 LDLIBS  ?= -lm
 
 SRC := src/main.c src/term.c src/gfx.c src/lyrics.c src/scenes.c \
