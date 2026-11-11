@@ -1,0 +1,28 @@
+name: Build Windows Exe
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Setup MinGW
+      uses: egor-tukin/setup-mingw@v2
+
+    - name: Compile with Makefile
+      run: |
+        mingw32-make
+
+    - name: Upload artifact (.exe)
+      uses: actions/upload-artifact@v4
+      with:
+        name: world_execute_me_windows
+        path: world_execute_me.exe
